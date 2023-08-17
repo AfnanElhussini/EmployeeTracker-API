@@ -49,7 +49,7 @@ namespace EmployeeTrackerApi.Controllers
 
         
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetEmployeeByIdAsync(Guid id)
+        public async Task<IActionResult> GetEmployeeById(Guid id)
         {
             var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
             if (employee == null)
@@ -59,13 +59,14 @@ namespace EmployeeTrackerApi.Controllers
             var employeeDTO = _mapper.Map<EmployeeDTO>(employee);
             return Ok(employeeDTO);
         }
-        // POST: api/Employee
-        // Id {3fa85f64-5717-4562-b3fc-2c963f66afa6}
-        // guid ={d32f0643-28ba-4383-b368-aa6398913706}
-        //employee id ={025d4da3-0ab8-4f67-b98f-9137dfbad118}
+       
         [HttpPost]
         public async Task<IActionResult> CreateEmployeeAsync(EmployeeDTO employeeDTO)
         { 
+            if(!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
             var employee = _mapper.Map<Employee>(employeeDTO);
             var empId = Guid.NewGuid();
             employee.Id = empId;
@@ -76,18 +77,20 @@ namespace EmployeeTrackerApi.Controllers
             _employeeRepository.SaveChanges();
             return Ok("Employee Added!");
         }
-        // PUT 
+         
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEmployeeAsync(Guid id, EmployeeDTO employeeDTO)
+        [HttpPut]
+        public async Task<IActionResult> UpdateEmployeeAsync( EmployeeDTO employeeDTO)
         {
-            var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
+            var employee = await _employeeRepository.GetEmployeeByIdAsync(employeeDTO.Id);
+           
             if (employee == null)
             {
                 return NotFound("No Employee with This ID.");
             }
-            _mapper.Map(employeeDTO, employee);
-            _employeeRepository.UpdateEmployeeAsync(employee);
+          var UpdatedEmployee=  _mapper.Map(employeeDTO, employee);
+            UpdatedEmployee.Id = employee.Id;
+            _employeeRepository.UpdateEmployeeAsync(UpdatedEmployee);
             _employeeRepository.SaveChanges();
             return Ok("Employee Updated!");
         }
@@ -103,7 +106,7 @@ namespace EmployeeTrackerApi.Controllers
             }
             _employeeRepository.DeleteEmployee(id);
            int Result = _employeeRepository.SaveChanges();
-            return Ok("Employee Deleted!");
+            return Ok(new { success = true, message = "Employee Deleted!" });
         }
      
 
